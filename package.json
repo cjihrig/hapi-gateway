@@ -1,0 +1,48 @@
+{
+  "name": "hapi-gateway",
+  "version": "0.1.0",
+  "description": "use hapi as a gateway to lambda functions",
+  "author": "Continuation Labs <contact@continuation.io> (http://continuation.io/)",
+  "main": "lib/index.js",
+  "homepage": "https://github.com/continuationlabs/hapi-gateway",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/continuationlabs/hapi-gateway"
+  },
+  "bugs": {
+    "url": "https://github.com/continuationlabs/hapi-gateway/issues"
+  },
+  "license": "MIT",
+  "scripts": {
+    "lint": "belly-button -f",
+    "test": "npm run lint && lab -v -a code -t 100"
+  },
+  "engines": {
+    "node": ">=4.0.0"
+  },
+  "dependencies": {
+    "aws-sdk": "2.4.2",
+    "insync": "2.1.1",
+    "joi": "8.4.2",
+    "lambundaler": "0.4.0",
+    "lodash.merge": "4.4.0"
+  },
+  "devDependencies": {
+    "aws-sdk-mock": "1.3.x",
+    "belly-button": "2.x.x",
+    "code": "3.x.x",
+    "hapi": "13.x.x",
+    "lab": "10.x.x",
+    "stand-in": "4.x.x"
+  },
+  "keywords": [
+    "AWS",
+    "lambda",
+    "lambda function",
+    "gateway",
+    "API gateway",
+    "API",
+    "hapi",
+    "plugin"
+  ]
+}
