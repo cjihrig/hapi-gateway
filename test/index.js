@@ -1,7 +1,6 @@
 'use strict';
 
 const Path = require('path');
-const Aws = require('aws-sdk');
 const AwsMock = require('aws-sdk-mock');
 const Bundler = require('lambundaler');
 const Code = require('code');
@@ -59,7 +58,7 @@ function prepareServer (options, callback) {
 describe('hapi Gateway', () => {
   it('invokes the lambda function', (done) => {
     AwsMock.mock('Lambda', 'invoke', function (options, callback) {
-      callback(null, options);
+      callback(null, { StatusCode: 200, Payload: 'foobar' });
     });
 
     prepareServer((err, server) => {
@@ -71,8 +70,7 @@ describe('hapi Gateway', () => {
       }, (res) => {
         AwsMock.restore('Lambda', 'invoke');
         expect(res.statusCode).to.equal(200);
-        expect(res.result.FunctionName).to.equal('foo');
-        expect(res.result.Payload).to.be.a.string();
+        expect(res.result).to.equal('foobar');
         done();
       });
     });
@@ -99,7 +97,7 @@ describe('hapi Gateway', () => {
     };
 
     AwsMock.mock('Lambda', 'invoke', function (options, callback) {
-      callback(null, options);
+      callback(null, { StatusCode: 200, Payload: options.Payload });
     });
 
     prepareServer(options, (err, server) => {
@@ -111,8 +109,7 @@ describe('hapi Gateway', () => {
       }, (res) => {
         AwsMock.restore('Lambda', 'invoke');
         expect(res.statusCode).to.equal(200);
-        expect(res.result.FunctionName).to.equal('foo');
-        expect(res.result.Payload).to.equal({ foo: 'bar' });
+        expect(res.result).to.equal({ foo: 'bar' });
         done();
       });
     });
@@ -325,58 +322,6 @@ describe('hapi Gateway', () => {
       stand.restore();
       expect(err).to.be.an.error(Error, 'foo');
       done();
-    });
-  });
-
-  it('reuses deployment lambda object when invoking', (done) => {
-    const stand = StandIn.replace(Bundler, 'bundle', (stand, options, callback) => {
-      callback(null, null, { lambda: new Aws.Lambda() });
-    });
-
-    AwsMock.mock('Lambda', 'invoke', function (options, callback) {
-      callback(null, { foo: 'bar' });
-    });
-
-    const options = {
-      plugin: {
-        role: 'arn:aws:iam::12345:role/lambda_basic_execution',
-        config: {
-          accessKeyId: 'foo',
-          secretAccessKey: 'bar',
-          region: 'us-east-1'
-        }
-      },
-      routes: [
-        {
-          method: 'GET',
-          path: '/foo',
-          config: {
-            handler: {
-              lambda: {
-                name: 'foo',
-                deploy: {
-                  source: Path.join(fixturesDir, 'index.js'),
-                  export: 'handler'
-                }
-              }
-            }
-          }
-        }
-      ]
-    };
-
-    prepareServer(options, (err, server) => {
-      expect(err).to.not.exist();
-
-      server.inject({
-        method: 'GET',
-        url: '/foo'
-      }, (res) => {
-        AwsMock.restore('Lambda', 'invoke');
-        stand.restore();
-        expect(res.result).to.equal({ foo: 'bar' });
-        done();
-      });
     });
   });
 });
