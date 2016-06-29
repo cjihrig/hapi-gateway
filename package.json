@@ -1,6 +1,6 @@
 {
   "name": "hapi-gateway",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "use hapi as a gateway to lambda functions",
   "author": "Continuation Labs <contact@continuation.io> (http://continuation.io/)",
   "main": "lib/index.js",
