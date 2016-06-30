@@ -48,7 +48,8 @@ server.register([
     },
     {
       // This deploys the lambda function code in deploy.source at startup.
-      // The function can then be invoked via this route.
+      // The function can then be invoked via this route. When the server
+      // shuts down, the lambda function is deleted.
       method: 'GET',
       path: '/hello-world',
       config: {
@@ -57,7 +58,8 @@ server.register([
             name: 'hello-world',
             deploy: {
               source: Path.join(__dirname, 'hello-world.js'),
-              export: 'handler'
+              export: 'handler',
+              teardown: true
             }
           }
         }
@@ -69,6 +71,18 @@ server.register([
     if (err) {
       throw err;
     }
+
+    // Handle Control+C so the server can be stopped and lambdas torn down
+    process.on('SIGINT', () => {
+      console.log('Shutting down server...');
+      server.stop((err) => {
+        if (err) {
+          throw err;
+        }
+
+        process.exit(0);
+      });
+    });
 
     console.log(`Server started at ${server.info.uri}`);
   });

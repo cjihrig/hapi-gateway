@@ -71,7 +71,7 @@ describe('hapi Gateway', () => {
         AwsMock.restore('Lambda', 'invoke');
         expect(res.statusCode).to.equal(200);
         expect(res.result).to.equal('foobar');
-        done();
+        server.stop(done);
       });
     });
   });
@@ -110,7 +110,7 @@ describe('hapi Gateway', () => {
         AwsMock.restore('Lambda', 'invoke');
         expect(res.statusCode).to.equal(200);
         expect(res.result).to.equal({ foo: 'bar' });
-        done();
+        server.stop(done);
       });
     });
   });
@@ -143,7 +143,7 @@ describe('hapi Gateway', () => {
         url: '/foo'
       }, (res) => {
         expect(res.statusCode).to.equal(500);
-        done();
+        server.stop(done);
       });
     });
   });
@@ -182,7 +182,7 @@ describe('hapi Gateway', () => {
         AwsMock.restore('Lambda', 'invoke');
         expect(res.statusCode).to.equal(200);
         expect(res.result).to.equal('foobar');
-        done();
+        server.stop(done);
       });
     });
   });
@@ -201,7 +201,7 @@ describe('hapi Gateway', () => {
       }, (res) => {
         AwsMock.restore('Lambda', 'invoke');
         expect(res.statusCode).to.equal(500);
-        done();
+        server.stop(done);
       });
     });
   });
@@ -281,7 +281,7 @@ describe('hapi Gateway', () => {
       stand.restore();
       expect(stand.invocations).to.equal(1);
       expect(err).to.not.exist();
-      done();
+      server.stop(done);
     });
   });
 
@@ -321,7 +321,87 @@ describe('hapi Gateway', () => {
     prepareServer(options, (err, server) => {
       stand.restore();
       expect(err).to.be.an.error(Error, 'foo');
-      done();
+      server.stop(done);
+    });
+  });
+
+  it('deletes functions when teardown is true', (done) => {
+    const bundleStand = StandIn.replace(Bundler, 'bundle', (stand, options, callback) => {
+      callback(null, null, {});
+    });
+
+    const options = {
+      plugin: {
+        role: 'arn:aws:iam::12345:role/lambda_basic_execution',
+        config: {
+          accessKeyId: 'foo',
+          secretAccessKey: 'bar',
+          region: 'us-east-1'
+        }
+      },
+      routes: [
+        // lambda route with no deploy information
+        {
+          method: 'GET',
+          path: '/baz',
+          config: {
+            handler: {
+              lambda: {
+                name: 'baz'
+              }
+            }
+          }
+        },
+        // lambda route with deploy information but no teardown
+        {
+          method: 'GET',
+          path: '/bar',
+          config: {
+            handler: {
+              lambda: {
+                name: 'bar',
+                deploy: {
+                  source: Path.join(fixturesDir, 'index.js'),
+                  export: 'handler'
+                }
+              }
+            }
+          }
+        },
+        // lambda route with deploy information and teardown
+        {
+          method: 'GET',
+          path: '/foo',
+          config: {
+            handler: {
+              lambda: {
+                name: 'foo',
+                deploy: {
+                  source: Path.join(fixturesDir, 'index.js'),
+                  export: 'handler',
+                  teardown: true
+                }
+              }
+            }
+          }
+        }
+      ]
+    };
+
+    prepareServer(options, (err, server) => {
+      bundleStand.restore();
+      expect(bundleStand.invocations).to.equal(2);
+      expect(err).to.not.exist();
+
+      AwsMock.mock('Lambda', 'deleteFunction', function (options, callback) {
+        callback(null, {});
+      });
+
+      server.stop((err) => {
+        AwsMock.restore('Lambda', 'deleteFunction');
+        expect(err).to.not.exist();
+        done();
+      });
     });
   });
 });
