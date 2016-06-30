@@ -21,11 +21,10 @@
     "node": ">=4.0.0"
   },
   "dependencies": {
-    "aws-sdk": "2.4.2",
+    "aws-sdk": "2.4.3",
     "insync": "2.1.1",
     "joi": "8.4.2",
-    "lambundaler": "0.4.0",
-    "lodash.merge": "4.4.0"
+    "lambundaler": "0.5.0"
   },
   "devDependencies": {
     "aws-sdk-mock": "1.3.x",
