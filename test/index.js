@@ -273,6 +273,23 @@ describe('hapi Gateway', () => {
               }
             }
           }
+        },
+        // lambda route with deploy information but marked as local
+        {
+          method: 'GET',
+          path: '/quux',
+          config: {
+            handler: {
+              lambda: {
+                name: 'quux',
+                local: true,
+                deploy: {
+                  source: Path.join(fixturesDir, 'index.js'),
+                  export: 'handler'
+                }
+              }
+            }
+          }
         }
       ]
     };
@@ -401,6 +418,157 @@ describe('hapi Gateway', () => {
         AwsMock.restore('Lambda', 'deleteFunction');
         expect(err).to.not.exist();
         done();
+      });
+    });
+  });
+
+  it('invokes lambdas locally', (done) => {
+    const options = {
+      plugin: {
+        role: 'arn:aws:iam::12345:role/lambda_basic_execution',
+        local: true
+      },
+      routes: [
+        {
+          method: 'GET',
+          path: '/foo',
+          config: {
+            handler: {
+              lambda: {
+                name: 'foo',
+                deploy: {
+                  source: Path.join(fixturesDir, 'index.js'),
+                  export: 'handler'
+                }
+              }
+            }
+          }
+        }
+      ]
+    };
+
+    prepareServer(options, (err, server) => {
+      expect(err).to.not.exist();
+
+      server.inject({
+        method: 'GET',
+        url: '/foo'
+      }, (res) => {
+        expect(res.statusCode).to.equal(200);
+        expect(res.result).to.be.an.object();
+        expect(res.result.context).to.equal({});
+        expect(res.result.event).to.be.an.object();
+        expect(res.result.event.app).to.equal({});
+        expect(res.result.event.auth).to.be.an.object();
+        expect(res.result.event.headers).to.be.an.object();
+        expect(res.result.event.id).to.be.a.string();
+        expect(res.result.event.info).to.be.an.object();
+        expect(res.result.event.method).to.be.equal('get');
+        expect(res.result.event.mime).to.equal(null);
+        expect(res.result.event.params).to.be.an.object();
+        expect(res.result.event.path).to.equal('/foo');
+        expect(res.result.event.payload).to.equal(null);
+        expect(res.result.event.query).to.be.an.object();
+        expect(res.result.event.state).to.be.an.object();
+        server.stop(done);
+      });
+    });
+  });
+
+  it('handles lambda errors when run locally', (done) => {
+    const options = {
+      plugin: {
+        role: 'arn:aws:iam::12345:role/lambda_basic_execution',
+        local: true
+      },
+      routes: [
+        {
+          method: 'GET',
+          path: '/foo',
+          config: {
+            handler: {
+              lambda: {
+                name: 'foo',
+                deploy: {
+                  source: Path.join(fixturesDir, 'errback.js'),
+                  export: 'handler'
+                }
+              }
+            }
+          }
+        },
+        {
+          method: 'GET',
+          path: '/bar',
+          config: {
+            handler: {
+              lambda: {
+                name: 'bar',
+                deploy: {
+                  source: Path.join(fixturesDir, 'circular.js'),
+                  export: 'handler'
+                }
+              }
+            }
+          }
+        }
+      ]
+    };
+
+    prepareServer(options, (err, server) => {
+      expect(err).to.not.exist();
+
+      server.inject({
+        method: 'GET',
+        url: '/foo'
+      }, (res) => {
+        expect(res.statusCode).to.equal(500);
+        expect(res.result).to.equal({
+          errorMessage: 'problem',
+          errorType: 'Error',
+          stackTrace: []
+        });
+
+        server.inject({
+          method: 'GET',
+          url: '/bar'
+        }, (res) => {
+          expect(res.statusCode).to.equal(500);
+          expect(res.result).to.equal({
+            errorMessage: 'Converting circular structure to JSON',
+            errorType: 'TypeError',
+            stackTrace: []
+          });
+          server.stop(done);
+        });
+      });
+    });
+  });
+
+  it('cannot invoke a function locally without code', (done) => {
+    const options = {
+      plugin: {
+        role: 'arn:aws:iam::12345:role/lambda_basic_execution',
+        local: true
+      },
+      routes: [
+        {
+          method: 'GET',
+          path: '/foo',
+          config: { handler: { lambda: { name: 'foo' } } }
+        }
+      ]
+    };
+
+    prepareServer(options, (err, server) => {
+      expect(err).to.not.exist();
+
+      server.inject({
+        method: 'GET',
+        url: '/foo'
+      }, (res) => {
+        expect(res.statusCode).to.equal(500);
+        server.stop(done);
       });
     });
   });

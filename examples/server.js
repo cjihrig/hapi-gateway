@@ -64,6 +64,40 @@ server.register([
           }
         }
       }
+    },
+    {
+      // This demonstrates a lambda that returns an error
+      method: 'GET',
+      path: '/error-response',
+      config: {
+        handler: {
+          lambda: {
+            name: 'error-response',
+            deploy: {
+              source: Path.join(__dirname, 'error-response.js'),
+              export: 'handler',
+              teardown: true
+            }
+          }
+        }
+      }
+    },
+    {
+      // This lambda returns its event and context values
+      method: 'GET',
+      path: '/echo-inputs',
+      config: {
+        handler: {
+          lambda: {
+            name: 'echo-inputs',
+            deploy: {
+              source: Path.join(__dirname, 'echo-inputs.js'),
+              export: 'handler',
+              teardown: true
+            }
+          }
+        }
+      }
     }
   ]);
 
