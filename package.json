@@ -21,7 +21,7 @@
     "node": ">=4.0.0"
   },
   "dependencies": {
-    "aws-sdk": "2.4.3",
+    "aws-sdk": "2.4.4",
     "insync": "2.1.1",
     "joi": "8.4.2",
     "lambundaler": "0.5.0"
