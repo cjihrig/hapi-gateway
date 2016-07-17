@@ -108,6 +108,10 @@ On plugin registration, `hapi-gateway` defines a new handler type named `lambda`
 - `deploy` (object) - An optional object used to deploy code as an AWS Lambda. Code is deployed at server startup using an `'onPreStart'` extension point. If this object is not provided, then the user is responsible for deploying the code prior to starting the server. If this object is present, it must adhere to the following schema.
   - `source` (string) - The path to a file containing Lambda function code.
   - `export` (string) - The name of the exported function in `source` that acts as the Lambda function's entry point.
+  - `timeout` (number) - The execution timeout of the Lambda function in seconds. Defaults to three seconds.
+  - `memory` (number) - The amount of memory, in MB, given to the Lambda function. Must be a multiple of 64MB. Defaults to 128MB.
   - `teardown` (boolean) - If `true`, the deployed Lambda function is deleted when the hapi server shuts down. The deletion is done during an `'onPostStop'` extension point. Defaults to `false`, meaning the deployed function is not deleted.
+  - `exclude` (array) - An optional array of strings representing modules to exclude from the bundle. This array is passed to Browserify. This option is essential when bundling code that uses the `'aws-sdk'` module. You can bundle `'aws-sdk'` via the `files` option, or rely on the version that is natively available on Lambda.
+  - `files` (array) - An optional array of strings and/or objects indicating additional files (such as standalone executables) to include in the zip archive. Strings specify file and directory paths. Objects should have `name` and `data` properties which are used as the file name and contents in the zip archive.
 
 It is worth noting that the same options can be provided to the plugin's `register()` function. The configuration for each route is used by merging the module defaults, the plugin registration options, and the individual route options (in order of increasing priority).
