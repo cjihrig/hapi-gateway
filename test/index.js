@@ -424,10 +424,7 @@ describe('hapi Gateway', () => {
 
   it('invokes lambdas locally', (done) => {
     const options = {
-      plugin: {
-        role: 'arn:aws:iam::12345:role/lambda_basic_execution',
-        local: true
-      },
+      plugin: { local: true },
       routes: [
         {
           method: 'GET',
